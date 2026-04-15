@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow – Gerenciador de Tarefas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* VARIÁVEIS GLOBAIS: define a paleta de cores e medidas do sistema */
+    :root {
+      --bg:           #0d0d0f;
+      --surface:      #16161a;
+      --surface-2:    #1e1e24;
+      --border:       #2a2a33;
+      --text:         #e8e8f0;
+      --text-muted:   #6b6b80;
+      --accent:       #7c6af7;
+      --accent-glow:  rgba(124, 106, 247, 0.25);
+      --alta:         #f45c7f;
+      --alta-bg:      rgba(244, 92, 127, 0.12);
+      --media:        #f5a623;
+      --media-bg:     rgba(245, 166, 35, 0.12);
+      --baixa:        #3ecf8e;
+      --baixa-bg:     rgba(62, 207, 142, 0.12);
+      --radius:       14px;
+      --radius-sm:    8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0);
+      background-size: 32px 32px;
+    }
+
+    .wrapper { max-width: 680px; margin: 0 auto; padding: 48px 20px 80px; }
+
+    /* CABEÇALHO */
+    .header { margin-bottom: 40px; }
+    .header-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 2.4rem;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .badge-pendentes {
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: 'Syne', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-top: 8px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .header-sub { color: var(--text-muted); font-size: 0.95rem; font-weight: 300; }
+    .divider { height: 1px; background: linear-gradient(to right, var(--accent), transparent); margin-bottom: 32px; }
+
+    /* FORMULÁRIO */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      transition: border-color 0.3s;
+    }
+    .form-card:focus-within { border-color: var(--accent); }
+
+    .form-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .form-row { display: flex; gap: 12px; margin-bottom: 16px; }
+
+    .input-descricao {
+      flex: 1;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-descricao::placeholder { color: var(--text-muted); }
+    .input-descricao:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+    .select-prioridade {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 36px 12px 16px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b80' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    .select-prioridade:focus { border-color: var(--accent); }
+
+    .btn-adicionar {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 12px 24px;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px var(--accent-glow);
+      white-space: nowrap;
+    }
+    .btn-adicionar:hover { background: #9080ff; box-shadow: 0 6px 24px rgba(124,106,247,0.4); }
+    .btn-adicionar:active { transform: scale(0.97); }
+
+    .erro-msg { color: var(--alta); font-size: 0.82rem; display: none; }
+    .erro-msg.visivel { display: block; }
+
+    /* FILTROS */
+    .filtros { display: flex; gap: 8px; margin-bottom: 20px; }
+    .btn-filtro {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-filtro.ativo { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+
+    /* RESUMO */
+    .resumo { display: flex; gap: 16px; margin-bottom: 24px; }
+    .resumo-item {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      text-align: center;
+    }
+    .resumo-num { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; display: block; }
+    .resumo-label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* LISTA */
+    .lista-tarefas { display: flex; flex-direction: column; gap: 10px; }
+
+    .estado-vazio { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .estado-vazio-icon { font-size: 3rem; display: block; margin-bottom: 12px; opacity: 0.4; }
+
+    /* CARD DE TAREFA */
+    .tarefa-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      animation: slideIn 0.25s ease;
+      transition: border-color 0.2s, opacity 0.3s;
+    }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .tarefa-card:hover { border-color: #3a3a46; }
+    .tarefa-card.concluida { opacity: 0.5; }
+
+    /* Barra lateral colorida por prioridade */
+    .tarefa-card::before {
+      content: '';
+      width: 3px;
+      min-width: 3px;
+      height: 40px;
+      border-radius: 999px;
+    }
+    .tarefa-card[data-prioridade="alta"]::before  { background: var(--alta); }
+    .tarefa-card[data-prioridade="media"]::before { background: var(--media); }
+    .tarefa-card[data-prioridade="baixa"]::before { background: var(--baixa); }
+
+    /* Botão circular de conclusão */
+    .btn-check {
+      width: 22px; height: 22px; min-width: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+      color: transparent;
+      font-size: 12px;
+    }
+    .btn-check:hover { border-color: var(--accent); background: var(--accent-glow); }
+    .tarefa-card.concluida .btn-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    .tarefa-body { flex: 1; min-width: 0; }
+    .tarefa-descricao { font-size: 0.95rem; font-weight: 500; color: var(--text); word-break: break-word; }
+    .tarefa-card.concluida .tarefa-descricao { text-decoration: line-through; color: var(--text-muted); }
+
+    .tarefa-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+
+    .badge-prioridade {
+      font-size: 0.7rem; font-weight: 600;
+      padding: 2px 8px; border-radius: 999px;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .badge-prioridade.alta  { background: var(--alta-bg);  color: var(--alta); }
+    .badge-prioridade.media { background: var(--media-bg); color: var(--media); }
+    .badge-prioridade.baixa { background: var(--baixa-bg); color: var(--baixa); }
+
+    .tarefa-data { font-size: 0.75rem; color: var(--text-muted); }
+
+    .btn-excluir {
+      background: transparent; border: none; color: var(--text-muted);
+      cursor: pointer; padding: 4px; border-radius: var(--radius-sm);
+      line-height: 1; font-size: 1.2rem;
+      transition: color 0.2s, background 0.2s;
+      opacity: 0;
+    }
+    .tarefa-card:hover .btn-excluir { opacity: 1; }
+    .btn-excluir:hover { color: var(--alta); background: var(--alta-bg); }
+
+    @media (max-width: 480px) {
+      .form-row { flex-direction: column; }
+      .resumo { gap: 10px; }
+      .logo { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- CABECALHO -->
+  <header class="header">
+    <div class="header-top">
+      <h1 class="logo">TaskFlow</h1>
+      <span class="badge-pendentes" id="badge-pendentes">0 pendentes</span>
+    </div>
+    <p class="header-sub">Organize suas tarefas com foco e clareza.</p>
+  </header>
+
+  <div class="divider"></div>
+
+  <!-- FORMULARIO: adicionar nova tarefa -->
+  <section class="form-card">
+    <label for="input-descricao" class="form-label">Nova Tarefa</label>
+    <div class="form-row">
+      <input
+        type="text"
+        id="input-descricao"
+        class="input-descricao"
+        placeholder="Descreva a tarefa..."
+        maxlength="120"
+        autocomplete="off"
+      />
+      <select id="select-prioridade" class="select-prioridade">
+        <option value="alta">Alta</option>
+        <option value="media" selected>Media</option>
+        <option value="baixa">Baixa</option>
+      </select>
+      <button id="btn-adicionar" class="btn-adicionar" onclick="adicionarTarefa()">+ Adicionar</button>
+    </div>
+    <p class="erro-msg" id="erro-msg">Por favor, descreva a tarefa antes de adicionar.</p>
+  </section>
+
+  <!-- RESUMO: contadores -->
+  <div class="resumo">
+    <div class="resumo-item">
+      <span class="resumo-num" id="num-total">0</span>
+      <span class="resumo-label">Total</span>
+    </div>
+    <div class="resumo-item">
+      <span class="resumo-num" id="num-concluidas" style="color: var(--baixa)">0</span>
+      <span class="resumo-label">Concluidas</span>
+    </div>
+    <div class="resumo-item">
+      <span class="resumo-num" id="num-pendentes" style="color: var(--accent)">0</span>
+      <span class="resumo-label">Pendentes</span>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros">
+    <button class="btn-filtro ativo" onclick="mudarFiltro('todas', this)">Todas</button>
+    <button class="btn-filtro" onclick="mudarFiltro('pendentes', this)">Pendentes</button>
+    <button class="btn-filtro" onclick="mudarFiltro('concluidas', this)">Concluidas</button>
+  </div>
+
+  <!-- LISTA DE TAREFAS -->
+  <main class="lista-tarefas" id="lista-tarefas"></main>
+
+</div>
+
+<script>
+  // Array que armazena todas as tarefas do sistema
+  let tarefas = [];
+  let filtroAtivo = 'todas';
+
+  // ADICIONAR TAREFA: le os campos, valida e cria o objeto
+  function adicionarTarefa() {
+    const inputDescricao   = document.getElementById('input-descricao');
+    const selectPrioridade = document.getElementById('select-prioridade');
+    const erroMsg          = document.getElementById('erro-msg');
+    const descricao        = inputDescricao.value.trim();
+    const prioridade       = selectPrioridade.value;
+
+    // Validacao: campo vazio exibe mensagem de erro
+    if (!descricao) {
+      erroMsg.classList.add('visivel');
+      inputDescricao.focus();
+      return;
+    }
+    erroMsg.classList.remove('visivel');
+
+    // Cria o objeto de tarefa com todos os campos necessarios
+    const novaTarefa = {
+      id:          Date.now(),
+      descricao:   descricao,
+      prioridade:  prioridade,
+      concluida:   false,
+      dataCriacao: new Date()
+    };
+
+    tarefas.unshift(novaTarefa); // Adiciona no inicio para aparecer primeiro
+    inputDescricao.value = '';
+    inputDescricao.focus();
+    renderizarTarefas();
+  }
+
+  // ALTERNAR CONCLUSAO: muda o status da tarefa entre pendente e concluida
+  function alternarConclusao(id) {
+    const tarefa = tarefas.find(t => t.id === id);
+    if (tarefa) {
+      tarefa.concluida = !tarefa.concluida;
+      renderizarTarefas();
+    }
+  }
+
+  // EXCLUIR TAREFA: remove do array pelo id
+  function excluirTarefa(id) {
+    tarefas = tarefas.filter(t => t.id !== id);
+    renderizarTarefas();
+  }
+
+  // MUDAR FILTRO: atualiza o filtro ativo e re-renderiza
+  function mudarFiltro(filtro, botao) {
+    filtroAtivo = filtro;
+    document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('ativo'));
+    botao.classList.add('ativo');
+    renderizarTarefas();
+  }
+
+  // RENDERIZAR TAREFAS: funcao central — atualiza o DOM com base no array e filtro
+  function renderizarTarefas() {
+    const lista = document.getElementById('lista-tarefas');
+
+    // Aplica o filtro selecionado
+    let tarefasFiltradas;
+    if (filtroAtivo === 'pendentes')   tarefasFiltradas = tarefas.filter(t => !t.concluida);
+    else if (filtroAtivo === 'concluidas') tarefasFiltradas = tarefas.filter(t => t.concluida);
+    else tarefasFiltradas = tarefas;
+
+    // Estado vazio: mensagem quando nao ha tarefas
+    if (tarefasFiltradas.length === 0) {
+      const msgs = {
+        todas:      ['?', 'Nenhuma tarefa ainda.', 'Adicione sua primeira tarefa acima.'],
+        pendentes:  ['?', 'Nenhuma tarefa pendente.', 'Tudo em dia!'],
+        concluidas: ['?', 'Nenhuma tarefa concluida ainda.', 'Complete uma tarefa para ve-la aqui.']
+      };
+      const [icon, titulo, subtitulo] = msgs[filtroAtivo];
+      lista.innerHTML = `<div class="estado-vazio"><span class="estado-vazio-icon">${icon}</span><p><strong>${titulo}</strong></p><p>${subtitulo}</p></div>`;
+    } else {
+      lista.innerHTML = tarefasFiltradas.map(t => criarCardHTML(t)).join('');
+    }
+
+    atualizarContadores();
+  }
+
+  // CRIAR CARD HTML: gera o HTML de uma tarefa individual
+  function criarCardHTML(tarefa) {
+    const classeCard    = tarefa.concluida ? 'tarefa-card concluida' : 'tarefa-card';
+    const iconeCheck    = tarefa.concluida ? '&#10003;' : '';
+    const dataFormatada = formatarData(tarefa.dataCriacao);
+    const descEscapada  = escaparHTML(tarefa.descricao);
+
+    return `
+      <div class="${classeCard}" data-prioridade="${tarefa.prioridade}">
+        <button class="btn-check" onclick="alternarConclusao(${tarefa.id})" title="Marcar como concluida">${iconeCheck}</button>
+        <div class="tarefa-body">
+          <p class="tarefa-descricao">${descEscapada}</p>
+          <div class="tarefa-meta">
+            <span class="badge-prioridade ${tarefa.prioridade}">${tarefa.prioridade}</span>
+            <span class="tarefa-data">${dataFormatada}</span>
+          </div>
+        </div>
+        <button class="btn-excluir" onclick="excluirTarefa(${tarefa.id})" title="Excluir">&#10005;</button>
+      </div>`;
+  }
+
+  // ATUALIZAR CONTADORES: atualiza os numeros no resumo e badge do cabecalho
+  function atualizarContadores() {
+    const total      = tarefas.length;
+    const concluidas = tarefas.filter(t => t.concluida).length;
+    const pendentes  = total - concluidas;
+
+    document.getElementById('num-total').textContent      = total;
+    document.getElementById('num-concluidas').textContent  = concluidas;
+    document.getElementById('num-pendentes').textContent   = pendentes;
+
+    const badge = document.getElementById('badge-pendentes');
+    badge.textContent = pendentes === 1 ? '1 pendente' : `${pendentes} pendentes`;
+  }
+
+  // FORMATAR DATA: converte Date para string legivel
+  function formatarData(data) {
+    const d   = new Date(data);
+    const dia  = String(d.getDate()).padStart(2, '0');
+    const mes  = String(d.getMonth() + 1).padStart(2, '0');
+    const hora = String(d.getHours()).padStart(2, '0');
+    const min  = String(d.getMinutes()).padStart(2, '0');
+    return `${dia}/${mes} as ${hora}:${min}`;
+  }
+
+  // ESCAPAR HTML: previne XSS convertendo caracteres especiais
+  function escaparHTML(texto) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(texto));
+    return div.innerHTML;
+  }
+
+  // Permite adicionar tarefa pressionando Enter no campo de texto
+  document.getElementById('input-descricao').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') adicionarTarefa();
+  });
+
+  // Inicializacao: renderiza a lista ao carregar a pagina
+  renderizarTarefas();
+</script>
+</body>
+</html>
